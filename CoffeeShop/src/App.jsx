@@ -1,415 +1,514 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 const App = () => {
-  const [formSubmitted, setFormSubmitted] = useState(false);
+  // --- React State ---
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [notification, setNotification] = useState("");
+  const [selectedBlog, setSelectedBlog] = useState(null); // State for Blog Modal
 
-  // Handle Form Submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setFormSubmitted(true);
-    setTimeout(() => setFormSubmitted(false), 5000);
+  // --- Storage Logic ---
+  const addToCart = (name, price) => {
+    const newItem = { 
+      name, 
+      price, 
+      id: Date.now(),
+      timestamp: new Date().toLocaleTimeString() 
+    };
+    setCart([...cart, newItem]);
+    showNotification(`${name} added!`);
   };
 
+  const removeFromCart = (id) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
+  const toggleCart = () => setIsCartOpen(!isCartOpen);
+
+  const showNotification = (msg) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(""), 2000);
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+
+  // --- Blog Data ---
+  const blogs = [
+    {
+      id: 1,
+      title: "The Art of Micro-foam",
+      summary: "Discover how we achieve that signature velvet texture in every cup.",
+      image: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&q=80&w=500",
+      content: "Achieving the perfect velvet micro-foam requires extreme precision. We start with high-quality milk chilled to exactly 4°C, introducing air early in the steaming process to create microscopic bubbles. By transitioning into a high-speed whirlpool vortex, we integrate that air fully, resulting in a glossy, paint-like consistency that perfectly complements our dark roasts."
+    },
+    {
+      id: 2,
+      title: "Sustainability at Source",
+      summary: "A deep dive into our ethical sourcing practices across the globe.",
+      image: "https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&q=80&w=500",
+      content: "Sustainability is the heart of our roastery. We bypass industrial supply chains to work directly with single-origin farms. This direct-trade model ensures that farmers receive premium pay far above fair-trade minimums. By investing in these local communities, we support biodiversity and traditional harvesting methods that preserve the unique floral notes of every bean we source."
+    }
+  ];
+
   return (
-    <div className="app-wrapper">
-      {/* STRICT CSS RESET & STYLES 
-          This replaces the need for App.css and Tailwind.
-      */}
+    <div className="app-root">
       <style>{`
         :root {
-          --primary: #4a3728;
-          --accent: #c89666;
-          --bg: #fdfaf7;
-          --text: #2d241e;
-          --white: #ffffff;
+          --espresso: #2D241E;
+          --crema: #C89666;
+          --cream: #FFF3DD;
+          --paper: #FAF7F2;
+          --accent: #4A3728;
         }
 
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        html {
-          scroll-behavior: smooth;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        
         body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          background-color: var(--bg);
-          color: var(--text);
-          line-height: 1.6;
+          font-family: 'Lato', sans-serif;
+          background-color: #E5E5E5;
+          color: var(--espresso);
         }
 
-        .container {
-          width: 90%;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        /* Navigation */
-        nav {
-          background: var(--white);
-          height: 70px;
+        .slide-container {
+          width: 95vw;
+          max-width: 1280px;
+          height: auto;
+          background-color: var(--paper);
+          margin: 40px auto;
+          position: relative;
           display: flex;
-          align-items: center;
-          position: fixed;
-          top: 0;
-          width: 100%;
-          z-index: 1000;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          flex-direction: column;
+          padding: 80px 40px 40px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+          border-radius: 12px;
+          overflow: hidden;
         }
 
-        .nav-content {
+        /* Nav */
+        .top-nav {
+          position: absolute;
+          top: 30px;
+          right: 40px;
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: 100%;
+          gap: 20px;
+          z-index: 100;
         }
-
-        .logo {
-          font-weight: 800;
-          color: var(--primary);
-          font-size: 1.25rem;
-          letter-spacing: -0.5px;
-        }
-
-        .nav-links {
-          display: none;
-        }
-
-        @media (min-width: 768px) {
-          .nav-links {
-            display: flex;
-            gap: 30px;
-          }
-        }
-
-        .nav-links a {
+        .top-nav a {
           text-decoration: none;
-          color: var(--text);
-          font-weight: 500;
-          font-size: 0.9rem;
-          transition: color 0.2s;
+          color: var(--crema);
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          transition: color 0.3s;
         }
+        .top-nav a:hover { color: var(--espresso); }
 
-        .nav-links a:hover {
-          color: var(--accent);
+        section { padding: 80px 0 40px; }
+
+        .section-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 44px;
+          margin-bottom: 40px;
+          border-left: 6px solid var(--crema);
+          padding-left: 20px;
+          color: var(--espresso);
         }
 
         /* Hero */
-        .hero {
-          height: 70vh;
-          min-height: 400px;
-          background-color: var(--primary);
-          background-image: radial-gradient(var(--accent) 0.5px, transparent 0.5px);
-          background-size: 20px 20px;
+        .home-hero {
+          height: 600px;
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
           text-align: center;
-          color: var(--white);
-          padding: 80px 20px 20px;
-        }
-
-        .hero h1 {
-          font-size: clamp(2.5rem, 8vw, 4rem);
-          line-height: 1.1;
+          border-radius: 8px;
+          overflow: hidden;
+          background: linear-gradient(rgba(45, 36, 30, 0.7), rgba(45, 36, 30, 0.8)), 
+                      url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1280');
+          background-size: cover;
+          background-position: center;
+          color: var(--cream);
           margin-bottom: 20px;
         }
 
-        .hero p {
-          max-width: 600px;
-          margin: 0 auto 30px;
-          font-size: 1.1rem;
-          opacity: 0.9;
-        }
-
-        /* Buttons */
-        .btn {
-          display: inline-block;
-          background: var(--accent);
-          color: var(--white);
-          padding: 12px 28px;
-          text-decoration: none;
-          border-radius: 4px;
-          font-weight: 700;
-          border: none;
-          cursor: pointer;
-          transition: transform 0.2s, opacity 0.2s;
-        }
-
-        .btn:hover {
-          opacity: 0.9;
-          transform: translateY(-2px);
-        }
-
-        /* Menu Section */
-        section {
-          padding: 80px 0;
-        }
-
-        .section-title {
-          text-align: center;
-          margin-bottom: 50px;
-        }
-
-        .section-title h2 {
-          font-size: 2rem;
-          color: var(--primary);
+        .home-hero h1 {
+          font-size: clamp(3rem, 8vw, 6rem);
+          font-family: 'Playfair Display', serif;
           margin-bottom: 10px;
+          text-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
-        .category-label {
-          font-size: 0.8rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: var(--accent);
-          letter-spacing: 2px;
-          margin: 40px 0 20px;
+        /* About Section */
+        .about-flex {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .about-text { flex: 1.2; min-width: 300px; }
+        
+        .about-img-single { 
+            flex: 0.8; 
+            min-width: 300px; 
+            height: 450px; 
+            object-fit: cover; 
+            border-radius: 12px; 
+            box-shadow: 15px 15px 0 var(--crema);
+        }
+
+        /* Menu Grid */
+        .menu-category-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 28px;
+          margin: 40px 0 25px;
+          color: var(--crema);
           border-bottom: 1px solid #eee;
           padding-bottom: 10px;
         }
 
-        .menu-grid {
+        .grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 25px;
+          gap: 30px;
+          margin-bottom: 60px;
         }
 
-        .menu-card {
-          background: var(--white);
-          padding: 25px;
-          border-radius: 8px;
-          border-left: 4px solid var(--accent);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-          transition: box-shadow 0.3s;
-        }
-
-        .menu-card:hover {
-          box-shadow: 0 8px 20px rgba(0,0,0,0.07);
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-          margin-bottom: 8px;
-        }
-
-        .card-header h4 {
-          font-size: 1.1rem;
-          color: var(--primary);
-        }
-
-        .price {
-          color: var(--accent);
-          font-weight: 700;
-        }
-
-        .card-desc {
-          font-size: 0.9rem;
-          color: #666;
-        }
-
-        /* Contact Section */
-        .contact-section {
-          background-color: #f0ece9;
-        }
-
-        .contact-form {
-          background: var(--white);
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 40px;
+        .tile {
+          background: white;
+          padding: 20px;
           border-radius: 12px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-
-        .form-group {
-          margin-bottom: 20px;
-        }
-
-        .form-group label {
-          display: block;
-          font-size: 0.85rem;
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        .form-group input, .form-group textarea {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: inherit;
-        }
-
-        .success-msg {
-          text-align: center;
-          padding: 40px;
-          background: #e8f5e9;
-          color: #2e7d32;
-          border-radius: 8px;
-        }
-
-        /* Footer */
-        footer {
-          background: var(--primary);
-          color: var(--white);
-          padding: 60px 0;
-          text-align: center;
-        }
-
-        .footer-logo {
-          font-weight: 800;
-          font-size: 1.5rem;
-          margin-bottom: 10px;
-        }
-
-        .socials {
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
           display: flex;
-          justify-content: center;
-          gap: 20px;
-          margin: 25px 0;
+          flex-direction: column;
+          transition: all 0.3s ease;
+          border: 1px solid transparent;
+          cursor: pointer;
+        }
+        .tile:hover { transform: translateY(-8px); border-color: var(--crema); }
+
+        .tile-img {
+          width: 100%;
+          height: 220px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-bottom: 15px;
+          background-color: #eee;
         }
 
-        .socials a {
+        .price-tag { font-size: 20px; font-weight: 800; color: var(--crema); margin: 10px 0; }
+
+        .btn-add {
+          background: var(--espresso);
           color: white;
-          text-decoration: none;
-          font-size: 0.8rem;
-          opacity: 0.7;
+          border: none;
+          padding: 12px;
+          border-radius: 6px;
+          font-weight: 700;
+          text-transform: uppercase;
+          font-size: 11px;
+          text-align: center;
+        }
+
+        /* Blogs */
+        .blog-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        .blog-card:hover { transform: scale(1.02); }
+        .blog-img { width: 100%; height: 220px; object-fit: cover; }
+        .blog-content { padding: 25px; }
+        .blog-content h4 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 12px; }
+        .blog-content p { font-size: 14px; opacity: 0.7; line-height: 1.6; margin-bottom: 20px; }
+
+        /* Blog Modal */
+        .blog-modal-overlay {
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.8);
+          z-index: 3000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .blog-modal {
+          background: var(--paper);
+          max-width: 600px;
+          width: 100%;
+          max-height: 90vh;
+          overflow-y: auto;
+          border-radius: 12px;
+          position: relative;
+          padding: 40px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .blog-modal img { width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; }
+
+        /* Contact */
+        .contact-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 60px;
+        }
+        .contact-form input, .contact-form textarea {
+            width: 100%; padding: 18px; margin-bottom: 20px;
+            border: 1px solid #ddd; border-radius: 6px; background: #fff;
+        }
+
+        /* BLEND circular trigger */
+        .cart-float {
+          position: fixed; bottom: 35px; right: 35px;
+          background: var(--espresso); color: white;
+          width: 80px; height: 80px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; z-index: 1000;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          border: 2px solid var(--crema);
+          transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .cart-float span { font-size: 13px; font-weight: 900; letter-spacing: 1.5px; color: white; }
+
+        .side-panel {
+          position: fixed; top: 0; right: 0; width: 100%; max-width: 420px; height: 100vh;
+          background: white; z-index: 1001; padding: 45px;
+          transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+          display: flex; flex-direction: column;
+        }
+        .side-panel.open { transform: translateX(0); }
+
+        .ledger-row {
+          display: flex; justify-content: space-between;
+          padding: 12px 0; border-bottom: 1px solid #eee; font-size: 14px;
+        }
+
+        .toast {
+          position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
+          background: var(--espresso); color: white; padding: 15px 35px;
+          border-radius: 50px; z-index: 2000; font-weight: 700;
+          border: 1px solid var(--crema);
         }
       `}</style>
 
-      {/* Navigation */}
-      <nav>
-        <div className="container nav-content">
-          <div className="logo">THE VELVET BEAN</div>
-          <div className="nav-links">
-            <a href="#home">Home</a>
-            <a href="#menu">Menu</a>
-            <a href="#contact">Visit</a>
-          </div>
-          <a href="#contact" className="btn" style={{ padding: '8px 16px', fontSize: '0.8rem' }}>Order Now</a>
-        </div>
-      </nav>
+      {notification && <div className="toast">{notification}</div>}
 
-      {/* Hero Section */}
-      <header className="hero" id="home">
-        <div className="container">
-          <h1>Wake Up to Perfection</h1>
-          <p>Artisanal coffee sourced from small-batch roasters, paired with pastries baked fresh every dawn in the heart of the city.</p>
-          <a href="#menu" className="btn">Explore Menu</a>
-        </div>
-      </header>
-
-      {/* Menu Section */}
-      <section id="menu">
-        <div className="container">
-          <div className="section-title">
-            <h2>The Coffee Menu</h2>
-            <p>Crafted with precision by our expert baristas</p>
-          </div>
-
-          <div className="category-label">Classics</div>
-          <div className="menu-grid">
-            {[
-              { name: "Espresso Latte", price: "$4.50", desc: "Double shot with silky steamed milk." },
-              { name: "Cappuccino", price: "$4.25", desc: "Equal parts espresso, milk, and foam." },
-              { name: "Flat White", price: "$4.75", desc: "Micro-foam over a double ristretto shot." },
-              { name: "Americano", price: "$3.50", desc: "Double espresso with hot water." }
-            ].map((item, idx) => (
-              <div className="menu-card" key={idx}>
-                <div className="card-header">
-                  <h4>{item.name}</h4>
-                  <span className="price">{item.price}</span>
-                </div>
-                <p className="card-desc">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="category-label">Cold Brews</div>
-          <div className="menu-grid">
-            {[
-              { name: "Signature Cold Brew", price: "$5.00", desc: "Steeped 18 hours for smooth finish." },
-              { name: "Nitro Cold Brew", price: "$5.50", desc: "Creamy texture infused with nitrogen." },
-              { name: "Iced Macchiato", price: "$5.25", desc: "Vanilla and caramel over cold milk." }
-            ].map((item, idx) => (
-              <div className="menu-card" key={idx}>
-                <div className="card-header">
-                  <h4>{item.name}</h4>
-                  <span className="price">{item.price}</span>
-                </div>
-                <p className="card-desc">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="category-label">Specialties</div>
-          <div className="menu-grid">
-            {[
-              { name: "Honey Lavender", price: "$5.75", desc: "Local honey and organic lavender syrup." },
-              { name: "Mocha Ganache", price: "$5.50", desc: "Melted dark chocolate and steamed milk." },
-              { name: "Pour Over", price: "$6.00", desc: "Single origin beans brewed to order." }
-            ].map((item, idx) => (
-              <div className="menu-card" key={idx}>
-                <div className="card-header">
-                  <h4>{item.name}</h4>
-                  <span className="price">{item.price}</span>
-                </div>
-                <p className="card-desc">{item.desc}</p>
-              </div>
-            ))}
+      {/* Blog Modal Overlay */}
+      {selectedBlog && (
+        <div className="blog-modal-overlay" onClick={() => setSelectedBlog(null)}>
+          <div className="blog-modal" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedBlog(null)} 
+              style={{position:'absolute', top:'20px', right:'20px', border:'none', background:'none', cursor:'pointer', fontSize:'24px'}}
+            >✕</button>
+            <img src={selectedBlog.image} alt={selectedBlog.title} />
+            <h2 style={{fontFamily: 'Playfair Display', marginBottom: '15px'}}>{selectedBlog.title}</h2>
+            <p style={{lineHeight: '1.8', opacity: 0.8}}>{selectedBlog.content}</p>
+            <button className="btn-add" style={{marginTop: '30px', padding: '12px 25px'}} onClick={() => setSelectedBlog(null)}>Close Reader</button>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Contact Section */}
-      <section className="contact-section" id="contact">
-        <div className="container">
-          <div className="contact-form">
-            {!formSubmitted ? (
-              <>
-                <h2 style={{ marginBottom: '20px', color: '#4a3728' }}>Contact Us</h2>
-                <form onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <label>Your Name</label>
+      {/* Floating Cart Trigger */}
+      <div className="cart-float" onClick={toggleCart}>
+        <span>BLEND</span>
+        {cart.length > 0 && (
+          <div style={{
+            position:'absolute', top:'-2px', right:'-2px', 
+            background:'var(--crema)', color:'white',
+            width:'26px', height:'26px', borderRadius:'50%', 
+            fontSize:'12px', display:'flex', alignItems:'center', justifyContent:'center',
+            border: '2px solid var(--espresso)', fontWeight: '900'
+          }}>
+            {cart.length}
+          </div>
+        )}
+      </div>
+
+      <div className={`side-panel ${isCartOpen ? 'open' : ''}`}>
+        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'center'}}>
+          <h2 style={{fontFamily: 'Playfair Display', fontSize: '32px'}}>Your Blends</h2>
+          <button onClick={toggleCart} style={{border: 'none', background: 'none', cursor: 'pointer', fontSize: '28px'}}>✕</button>
+        </div>
+        <div style={{flexGrow: 1, overflowY: 'auto'}}>
+          {cart.length === 0 ? <p style={{textAlign:'center', opacity:0.5, marginTop:'40px'}}>No blends selected yet.</p> : cart.map(item => (
+            <div className="cart-item" key={item.id} style={{display:'flex', justifyContent:'space-between', padding:'15px 0', borderBottom:'1px solid #f0f0f0', alignItems: 'center'}}>
+              <div>
+                <div style={{fontWeight: 'bold', fontSize:'16px'}}>{item.name}</div>
+                <div style={{fontSize: '11px', opacity: 0.5}}>{item.timestamp}</div>
+              </div>
+              <div style={{display:'flex', alignItems:'center'}}>
+                <span style={{fontWeight:'800', color:'var(--crema)'}}>₹{item.price}</span>
+                <button onClick={() => removeFromCart(item.id)} style={{color:'#ff4444', border:'none', background:'none', cursor:'pointer', marginLeft:'15px'}}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{borderTop: '2px solid var(--espresso)', paddingTop: '25px'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '24px', fontWeight: '900'}}>
+            <span>Total</span>
+            <span>₹{cartTotal}</span>
+          </div>
+          <button className="btn-add" style={{width:'100%', marginTop:'20px', padding:'18px', fontSize:'14px'}}>Complete Selection</button>
+        </div>
+      </div>
+
+      <div className="slide-container">
+        <div className="top-nav">
+          <a href="#home">Home</a>
+          <a href="#about">About</a>
+          <a href="#menu">Menu</a>
+          <a href="#blogs">Blogs</a>
+          <a href="#contact">Contact</a>
+        </div>
+
+        <div className="home-hero" id="home">
+          <div>
+            <p style={{textTransform: 'uppercase', letterSpacing: '8px', fontWeight: '700', color: 'var(--crema)', marginBottom: '10px'}}>Est. 2024</p>
+            <h1>The Velvet Bean</h1>
+            <p style={{fontSize: '24px', maxWidth: '650px', margin: '0 auto', fontWeight: '300'}}>Artisanal roasts and balanced micro-foam.</p>
+          </div>
+        </div>
+
+        <section id="about">
+            <h2 className="section-title">Our Story</h2>
+            <div className="about-flex">
+                <div className="about-text">
+                    <p style={{fontSize: '20px', lineHeight: '1.8', marginBottom: '25px', color: 'var(--accent)'}}>
+                        At <strong>The Velvet Bean</strong>, we focus on the essence of the bean. Every selection is a custom craft, balanced between bold intensity and delicate, beige micro-foam comfort.
+                    </p>
+                    <p style={{fontSize: '17px', opacity: 0.8, lineHeight: '1.7', marginBottom: '20px'}}>
+                        Founded in 2024, our roastery ensures that every cup served is sustainable, fresh, and uniquely textured.
+                    </p>
+                </div>
+                <img className="about-img-single" src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&q=80&w=1000" alt="Coffee Cup resting on Fresh Beans" />
+            </div>
+        </section>
+
+        <section id="menu">
+          <h2 className="section-title">The Menu</h2>
+          
+          <h3 className="menu-category-title">Espresso Classics</h3>
+          <div className="grid">
+            <MenuItem name="Espresso Latte" price={340} img="https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Cappuccino" price={320} img="https://images.unsplash.com/photo-1517701550541-628d0f19c00b?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Cortado" price={300} img="https://images.unsplash.com/photo-1512568400610-62da28bc8a13?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Americano" price={280} img="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+          </div>
+
+          <h3 className="menu-category-title">Cold Beverages</h3>
+          <div className="grid">
+            <MenuItem name="Signature Cold Brew" price={380} img="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Nitro Cold Brew" price={420} img="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Vietnamese Iced" price={390} img="https://images.unsplash.com/photo-1544145945-f904253d0c7b?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+          </div>
+
+          <h3 className="menu-category-title">Matcha & Mojito</h3>
+          <div className="grid">
+            <MenuItem name="Strawberry Matcha" price={495} img="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Mint Mojito" price={380} img="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=500" onAdd={addToCart} />
+            <MenuItem name="Matcha Frappé" price={480} img="https://images.unsplash.com/photo-1536496070240-2a7fbda4c97f?auto=format&fit=crop&q=80&w=600" onAdd={addToCart} />
+          </div>
+        </section>
+
+        {/* BLOGS SECTION - UPDATED WITH INTERACTIVE READ MORE */}
+        <section id="blogs">
+            <h2 className="section-title">Latest Blogs</h2>
+            <div className="grid">
+                {blogs.map(blog => (
+                  <div className="blog-card" key={blog.id}>
+                      <img className="blog-img" src={blog.image} alt={blog.title} />
+                      <div className="blog-content">
+                          <h4>{blog.title}</h4>
+                          <p>{blog.summary}</p>
+                          <button 
+                            onClick={() => setSelectedBlog(blog)}
+                            style={{color: 'var(--crema)', fontWeight: 'bold', textDecoration: 'none', border:'none', background:'none', cursor:'pointer'}}
+                          >
+                            Read More →
+                          </button>
+                      </div>
+                  </div>
+                ))}
+            </div>
+        </section>
+
+        <section id="contact">
+            <h2 className="section-title">Get In Touch</h2>
+            <div className="contact-container">
+                <div className="contact-info">
+                    <div>
+                        <h4 style={{fontFamily: 'Playfair Display', color: 'var(--crema)'}}>Roastery Location</h4>
+                        <p style={{opacity:0.7}}>123 Espresso Lane, Beanville, CA 90210</p>
+                    </div>
+                    <div>
+                        <h4 style={{fontFamily: 'Playfair Display', color: 'var(--crema)'}}>Contact Details</h4>
+                        <p style={{opacity:0.7}}>hello@velvetbean.com</p>
+                        <p style={{opacity:0.7}}>+1 (555) 123-4567</p>
+                    </div>
+                </div>
+                <form className="contact-form" onSubmit={(e) => { e.preventDefault(); showNotification("Message Sent!"); }}>
                     <input type="text" placeholder="Full Name" required />
-                  </div>
-                  <div className="form-group">
-                    <label>Your Message</label>
-                    <textarea rows="4" placeholder="How can we help?"></textarea>
-                  </div>
-                  <button type="submit" className="btn" style={{ width: '100%' }}>Send Message</button>
+                    <input type="email" placeholder="Email Address" required />
+                    <textarea placeholder="Your Message" rows="6" required></textarea>
+                    <button className="btn-add" style={{width: '100%', padding: '18px'}}>Send Message</button>
                 </form>
-              </>
-            ) : (
-              <div className="success-msg">
-                <h3>Message Sent!</h3>
-                <p>We'll get back to you as soon as possible.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+            </div>
+        </section>
 
-      {/* Footer */}
-      <footer>
-        <div className="container">
-          <div className="footer-logo">THE VELVET BEAN</div>
-          <p style={{ opacity: 0.7 }}>123 Coffee Lane, Beanville • Open 7AM - 7PM Daily</p>
-          <div className="socials">
-            <a href="#">Instagram</a>
-            <a href="#">Facebook</a>
-            <a href="#">Twitter</a>
-          </div>
-          <p style={{ fontSize: '0.7rem', opacity: 0.4 }}>&copy; 2024 The Velvet Bean Coffee Co. All rights reserved.</p>
+        <div id="storage" style={{background: '#fdfaf7', border: '2px dashed var(--crema)', borderRadius: '12px', padding: '40px', marginTop: '80px'}}>
+          <h2 style={{fontFamily: 'Playfair Display', marginBottom: '30px', color: 'var(--espresso)'}}>Stored Blends Ledger</h2>
+          {cart.length === 0 ? <p style={{opacity:0.5, fontStyle:'italic'}}>System memory is empty. Select a blend to begin storage.</p> : (
+            <div style={{background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 5px 20px rgba(0,0,0,0.05)'}}>
+              <div className="ledger-row" style={{fontWeight: '900', color: 'var(--crema)', borderBottom: '2px solid var(--paper)'}}>
+                <span>BLENDED ITEM</span>
+                <span>ENTRY TIMESTAMP</span>
+                <span>UNIT PRICE</span>
+              </div>
+              {cart.map(item => (
+                <div className="ledger-row" key={item.id}>
+                  <span style={{fontWeight:'700'}}>{item.name}</span>
+                  <span style={{opacity: 0.6}}>{item.timestamp}</span>
+                  <span style={{fontWeight: '800'}}>₹{item.price}</span>
+                </div>
+              ))}
+              <div className="ledger-row" style={{borderTop: '2px solid var(--crema)', marginTop: '15px', fontWeight: '900', fontSize: '20px', color: 'var(--espresso)'}}>
+                <span>AGGREGATE VALUE</span>
+                <span></span>
+                <span>₹{cartTotal}</span>
+              </div>
+            </div>
+          )}
         </div>
-      </footer>
+
+        <footer style={{textAlign: 'center', padding: '100px 0 60px', borderTop: '1px solid #eee', marginTop: '80px'}}>
+          <h3 style={{fontFamily: 'Playfair Display', fontSize: '32px', marginBottom:'15px'}}>The Velvet Bean Roastery</h3>
+          <p style={{opacity: 0.6, fontSize: '14px', letterSpacing:'1px'}}>Sourcing • Roasting • Serving since 2024</p>
+        </footer>
+      </div>
     </div>
   );
 };
+
+const MenuItem = ({ name, price, img, onAdd }) => (
+  <div className="tile" onClick={() => onAdd(name, price)}>
+    <img 
+      src={img} 
+      alt={name} 
+      className="tile-img" 
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=600';
+      }}
+    />
+    <h3 style={{fontSize: '22px', fontWeight: '700', marginTop: '10px'}}>{name}</h3>
+    <div className="price-tag">₹{price}</div>
+    <div className="btn-add">Select Blend</div>
+  </div>
+);
 
 export default App;
